@@ -1,3 +1,6 @@
+using AService.Models;
+using Microsoft.EntityFrameworkCore;
+
 namespace AService
 {
 	public class Program
@@ -5,9 +8,28 @@ namespace AService
 		public static void Main(string[] args)
 		{
 			var builder = WebApplication.CreateBuilder(args);
+
+			builder.Services.AddControllers();
+			builder.Services.AddDbContext<ItemContext>(opt =>
+				opt.UseInMemoryDatabase("ItemList"));
+			builder.Services.AddEndpointsApiExplorer();
+			builder.Services.AddSwaggerGen();
+
 			var app = builder.Build();
 
+			if (app.Environment.IsDevelopment())
+			{
+				app.UseSwagger();
+				app.UseSwaggerUI();
+			}
+
+			app.UseHttpsRedirection();
+
+			app.UseAuthorization();
+
 			app.MapGet("/", () => "Hello World!");
+
+			app.MapControllers();
 
 			app.Run();
 		}
