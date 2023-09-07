@@ -1,6 +1,8 @@
-﻿using AService.Models;
+﻿using AService.Items;
+using AService.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 
 namespace AService.Controllers
 {
@@ -9,11 +11,13 @@ namespace AService.Controllers
     public class ItemsController : ControllerBase
     {
         private readonly ItemContext _context;
+		private readonly IOptions<ServiceOptions> options;
 
-        public ItemsController(ItemContext context)
+		public ItemsController(ItemContext context, IOptions<ServiceOptions> options)
         {
             _context = context;
-        }
+			this.options = options;
+		}
 
         // GET: api/Items
         [HttpGet]
