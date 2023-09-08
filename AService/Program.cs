@@ -1,4 +1,5 @@
 using System.Configuration;
+using System.Security.Claims;
 using AService.Items;
 using AService.Models;
 using Microsoft.EntityFrameworkCore;
@@ -20,13 +21,15 @@ namespace AService
 			builder.Services.AddEndpointsApiExplorer();
 			builder.Services.AddSwaggerGen();
 
-			builder.Configuration.Sources.Clear();
-
 			IHostEnvironment env = builder.Environment;
 
-			builder.Configuration
-				.AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
-				.AddJsonFile($"appsettings.{env.EnvironmentName}.json", true, true);
+			// don't clean -> IOP ex
+			//builder.Configuration.Sources.Clear();
+
+			// already loaded at this point
+			//builder.Configuration
+			//	.AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
+			//	.AddJsonFile($"appsettings.{env.EnvironmentName}.json", true, true);
 
 			// get a config section
 			TestOptions testOptions = new() { Email = "help@support.example.com", PhoneNumber = "+7(812)-3452489" };
@@ -43,6 +46,9 @@ namespace AService
 				BindConfiguration(TestOptions.ConfigurationSectionName).
 				ValidateDataAnnotations();
 
+			builder.Services.AddAuthorization();
+			builder.Services.AddAuthentication("Bearer").AddJwtBearer();
+
 			var app = builder.Build();
 
 			if (app.Environment.IsDevelopment())
@@ -56,6 +62,8 @@ namespace AService
 			app.UseAuthorization();
 
 			app.MapGet("/", () => "Hello World!");
+			app.MapGet("/secret", (ClaimsPrincipal user) => $"Hello {user.Identity?.Name}. My secret")
+				.RequireAuthorization();
 
 			app.MapControllers();
 

@@ -1,0 +1,10 @@
+﻿dotnet user-secrets init
+dotnet user-secrets set KeyOne 1
+dotnet user-secrets set KeyTwo true
+
+// Ask the service provider for the configuration abstraction.
+IConfiguration config = host.Services.GetRequiredService<IConfiguration>();
+
+// Get values from the config given their key and their target type.
+int keyOneValue = config.GetValue<int>("KeyOne");
+bool keyTwoValue = config.GetValue<bool>("KeyTwo");
