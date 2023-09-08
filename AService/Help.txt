@@ -8,3 +8,35 @@ IConfiguration config = host.Services.GetRequiredService<IConfiguration>();
 // Get values from the config given their key and their target type.
 int keyOneValue = config.GetValue<int>("KeyOne");
 bool keyTwoValue = config.GetValue<bool>("KeyTwo");
+
+
+
+
+docker build -t bservice ..
+docker run -it --rm -p 5000:80 --name bservice_app bservice
+
+
+dotnet dev-certs https -ep %USERPROFILE%\.aspnet\https\aspnetapp.pfx -p _password_
+dotnet dev-certs https --trust
+
+docker run --rm -it -p 8000:80 -p 8001:443 -e ASPNETCORE_URLS="https://+;http://+" -e ASPNETCORE_HTTPS_PORT=8001 -e ASPNETCORE_Kestrel__Certificates__Default__Password="123456" -e ASPNETCORE_Kestrel__Certificates__Default__Path=/https/aspnetapp.pfx -v %USERPROFILE%\.aspnet\https:/https/ bservice
+
+
+JWT
+
+dotnet user-jwts create
+
+New JWT saved with ID 'd6628859'.
+Name: tchou
+
+Token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1bmlxdWVfbmFtZSI6InRjaG91Iiwic3ViIjoidGNob3UiLCJqdGkiOiJkNjYyODg1OSIsImF1ZCI6WyJodHRwOi8vbG9jYWxob3N0OjMxMDk1IiwiaHR0cHM6Ly9sb2NhbGhvc3Q6NDQzODkiLCJodHRwOi8vbG9jYWxob3N0OjUwNzUiLCJodHRwczovL2xvY2FsaG9zdDo3MDcyIl0sIm5iZiI6MTY5NDE5ODgxNywiZXhwIjoxNzAyMDYxMjE3LCJpYXQiOjE2OTQxOTg4MTgsImlzcyI6ImRvdG5ldC11c2VyLWp3dHMifQ.AeWwLJhUieQsYNswsg-TehBY5NLkc3RTTydW8t6HoRA
+
+Test JWT
+
+curl -i -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1bmlxdWVfbmFtZSI6InRjaG91Iiwic3ViIjoidGNob3UiLCJqdGkiOiJkNjYyODg1OSIsImF1ZCI6WyJodHRwOi8vbG9jYWxob3N0OjMxMDk1IiwiaHR0cHM6Ly9sb2NhbGhvc3Q6NDQzODkiLCJodHRwOi8vbG9jYWxob3N0OjUwNzUiLCJodHRwczovL2xvY2FsaG9zdDo3MDcyIl0sIm5iZiI6MTY5NDE5ODgxNywiZXhwIjoxNzAyMDYxMjE3LCJpYXQiOjE2OTQxOTg4MTgsImlzcyI6ImRvdG5ldC11c2VyLWp3dHMifQ.AeWwLJhUieQsYNswsg-TehBY5NLkc3RTTydW8t6HoRA" https://localhost:32774/secret
+
+dotnet user-jwts print d6628859 --show-all
+
+
+dotnet user-jwts create --name MyTestUser --scope "myapi:secrets"
+
