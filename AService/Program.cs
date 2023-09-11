@@ -18,6 +18,8 @@ namespace AService
 			builder.Services.AddControllers();
 			builder.Services.AddDbContext<ItemContext>(opt =>
 				opt.UseInMemoryDatabase("ItemList"));
+			builder.Services.AddDbContext<BookStoreContext>(opt =>
+				opt.UseInMemoryDatabase("BookStore"));
 			builder.Services.AddEndpointsApiExplorer();
 			builder.Services.AddSwaggerGen();
 
