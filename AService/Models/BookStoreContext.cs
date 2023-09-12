@@ -8,9 +8,9 @@ namespace AService.Models
 			: base(options)
 		{
 #if DEBUG
-			Author author1 = new Author() { Name = "Mark Twain", Gender = Items.Gender.MALE, BirthDate = DateTime.UtcNow };
+			Author author1 = new() { Name = "Mark Twain", Gender = Items.Gender.MALE, BirthDate = DateTime.UtcNow };
 
-			Book book1 = new Book() { Name = "Tom Soyer", Authors = new List<Author> { author1}, CreatedAt = DateTime.UtcNow, Pages = 100 };
+			Book book1 = new() { Name = "Tom Soyer", Authors = new List<Author> { author1}, CreatedAt = DateTime.UtcNow, Pages = 100 };
 
 			this.Add<Book>(book1);
 
@@ -18,6 +18,6 @@ namespace AService.Models
 #endif
 		}
 
-		public DbSet<Book> Books { get; set; } = null!;		
+		public virtual DbSet<Book> Books { get; set; } = null!;		
 	}
 }
