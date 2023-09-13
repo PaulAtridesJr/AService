@@ -1,15 +1,15 @@
-﻿using System.Web.Http;
-using System.Web.Http.Description;
+﻿using AService.DTOs;
 using AService.Items;
 using AService.Models;
-
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 
 namespace AService.Controllers
 {
-	[RoutePrefix("api/bs")]	
-	public class BookStoreController : ApiController
+	[Route("api/bs")]
+	[ApiController]
+	public class BookStoreController : ControllerBase
 	{
 		private readonly BookStoreContext _context;
 		private readonly IOptions<ServiceOptions> options;
@@ -21,16 +21,18 @@ namespace AService.Controllers
 		}
 
 		// GET: api/bs		
-		[Route("")]
-		public async Task<IEnumerable<Book>> GetItems()
+		[HttpGet]
+		public async Task<IEnumerable<BookDTO>> GetItems()
 		{			
-			return await _context.Books.ToListAsync();
+			return 
+				await _context.Books.
+					Select(s => new BookDTO() { Name = s.Name, Authors = s.Authors, CreatedAt = s.CreatedAt, Pages = s.Pages}).
+					ToListAsync();
 		}
 
 		// GET: api/bs/5
-		[Route("{id:int}")]
-		[ResponseType(typeof(Book))]
-		public async Task<IHttpActionResult> GetItem(long id)
+		[HttpGet("{id}")]
+		public async Task<ActionResult<BookDTO>> GetItem(long id)
 		{
 			if (_context.Books == null)
 			{
@@ -43,80 +45,109 @@ namespace AService.Controllers
 				return NotFound();
 			}
 
-			return Ok(item);
+			return Ok(new BookDTO() { Name = item.Name, Authors = item.Authors, CreatedAt = item.CreatedAt, Pages = item.Pages });
 		}
 
-		// https://learn.microsoft.com/en-us/archive/blogs/youssefm/writing-tests-for-an-asp-net-web-api-service
+		// PUT: api/bs/5
+		// To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
+		[HttpPut("{id}")]
+		public async Task<IActionResult> PutItem(long id, BookDTO item)
+		{
+			if (id != item.Id)
+			{
+				return BadRequest();
+			}
 
-		//// PUT: api/bs/5
-		//// To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-		//[HttpPut("{id}")]
-		//public async Task<IActionResult> PutItem(long id, Book item)
-		//{
-		//	if (id != item.Id)
-		//	{
-		//		return BadRequest();
-		//	}
+			var book = await _context.Books.FindAsync(id);
+			if (book == null)
+			{
+				return NotFound();
+			}
 
-		//	_context.Entry(item).State = EntityState.Modified;
+			Book updatedBook = 
+				new() { 
+					Id = book.Id,
+					CreatedAt = item.CreatedAt,
+					Name = item.Name,
+					Authors = item.Authors,
+					Pages = item.Pages,
+					Price = book.Price };
 
-		//	try
-		//	{
-		//		await _context.SaveChangesAsync();
-		//	}
-		//	catch (DbUpdateConcurrencyException)
-		//	{
-		//		if (!ItemExists(id))
-		//		{
-		//			return NotFound();
-		//		}
-		//		else
-		//		{
-		//			throw;
-		//		}
-		//	}
+			_context.Books.Remove(book);
+			_context.Books.Add(updatedBook);
 
-		//	return NoContent();
-		//}
+			try
+			{
+				await _context.SaveChangesAsync();
+			}
+			catch (DbUpdateConcurrencyException)
+			{
+				if (!ItemExists(id))
+				{
+					return NotFound();
+				}
+				else
+				{
+					throw;
+				}
+			}
 
-		//// POST: api/bs
-		//// To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-		//[HttpPost]
-		//public async Task<ActionResult<Item>> PostItem(Book item)
-		//{
-		//	if (_context.Books == null)
-		//	{
-		//		return Problem("Entity set 'ItemContext.Items'  is null.");
-		//	}
-		//	_context.Books.Add(item);
-		//	await _context.SaveChangesAsync();
+			return NoContent();
+		}
 
-		//	return CreatedAtAction(nameof(GetItem), new { id = item.Id }, item);
-		//}
+		// POST: api/bs
+		// To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
+		[HttpPost]
+		public async Task<ActionResult<Item>> PostItem(BookDTO item)
+		{
+			if (_context.Books == null)
+			{
+				return Problem("Entity set is null.");
+			}
 
-		//// DELETE: api/bs/5
-		//[HttpDelete("{id}")]
-		//public async Task<IActionResult> DeleteItem(long id)
-		//{
-		//	if (_context.Books == null)
-		//	{
-		//		return NotFound();
-		//	}
-		//	var item = await _context.Books.FindAsync(id);
-		//	if (item == null)
-		//	{
-		//		return NotFound();
-		//	}
+			var book = await _context.Books.FindAsync(item.Id);
+			if (book != null)
+			{
+				return Problem($"Entity with id {item.Id} already exists.");
+			}
 
-		//	_context.Books.Remove(item);
-		//	await _context.SaveChangesAsync();
+			_context.Books.Add(
+				new Book() { 
+					Id = item.Id, 
+					Authors = item.Authors,
+					CreatedAt = item.CreatedAt,
+					Name = item.Name, 
+					Pages = item.Pages, 
+					Price = Random.Shared.Next(1, 1000)
+				});
+			await _context.SaveChangesAsync();
 
-		//	return NoContent();
-		//}
+			return CreatedAtAction(nameof(GetItem), new { id = item.Id }, item);
+		}
 
-		//private bool ItemExists(long id)
-		//{
-		//	return (_context.Books?.Any(e => e.Id == id)).GetValueOrDefault();
-		//}
+		// DELETE: api/bs/5
+		[HttpDelete("{id}")]
+		public async Task<IActionResult> DeleteItem(long id)
+		{
+			if (_context.Books == null)
+			{
+				return NotFound();
+			}
+			var item = await _context.Books.FindAsync(id);
+			if (item == null)
+			{
+				return NotFound();
+			}
+
+			_context.Books.Remove(item);
+			await _context.SaveChangesAsync();
+
+			return NoContent();
+		}
+
+		private bool ItemExists(long id)
+		{
+			return (_context.Books?.Any(e => e.Id == id)).GetValueOrDefault();
+		}
 	}
 }

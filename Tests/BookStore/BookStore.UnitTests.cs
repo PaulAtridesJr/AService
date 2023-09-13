@@ -20,8 +20,8 @@ namespace AService.Tests.BookStore
 
             var actionResult = await controller.GetItems();
 
-            //Assert.NotNull(actionResult.Value);
-            //Assert.NotEmpty(actionResult.Value);
+            Assert.NotNull(actionResult);
+            Assert.NotEmpty(actionResult);
         }
     }
 }
