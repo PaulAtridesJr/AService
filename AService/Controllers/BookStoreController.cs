@@ -37,7 +37,15 @@ namespace AService.Controllers
 
 			var books = await this._context.Books.ToListAsync();
 			
-			var result = books.Select(s => new BookDTO() { Id = s.Id, Name = s.Name, Authors = s.Authors, CreatedAt = s.CreatedAt, Pages = s.Pages });
+			var result = books.Select(s => 
+				new BookDTO() { 
+					Id = s.Id, 
+					Name = s.Name, 
+					Authors = 
+						s.Authors?.Select(a => new AuthorDTO() { Name = a.Name, BirthDate = a.BirthDate, Gender = a.Gender }).ToList(), 
+					CreatedAt = s.CreatedAt, 
+					Pages = s.Pages 
+				});
 
 			this._logger?.LogDebug("{Count} books found", result.Count());
 
@@ -65,7 +73,7 @@ namespace AService.Controllers
 
 			this._logger?.LogDebug("Book with id {ID} was found", id);
 
-			return Ok(new BookDTO() { Name = item.Name, Authors = item.Authors, CreatedAt = item.CreatedAt, Pages = item.Pages });
+			return Ok(new BookDTO() { Name = item.Name, Authors = item.Authors?.Select(a => new AuthorDTO() { Name = a.Name, BirthDate = a.BirthDate, Gender = a.Gender }).ToList(), CreatedAt = item.CreatedAt, Pages = item.Pages });
 		}
 
 		// GET: api/bs/bookname/5
@@ -134,7 +142,7 @@ namespace AService.Controllers
 					Id = book.Id,
 					CreatedAt = item.CreatedAt,
 					Name = item.Name,
-					Authors = item.Authors,
+					Authors = item.Authors?.Select(s => new Author() { Name = s.Name, Gender = s.Gender, BirthDate = s.BirthDate }).ToList(),
 					Pages = item.Pages,
 					Price = book.Price };
 
@@ -185,7 +193,7 @@ namespace AService.Controllers
 			_context.Books.Add(
 				new Book() { 
 					Id = item.Id, 
-					Authors = item.Authors,
+					Authors = item.Authors?.Select(s => new Author() { Name = s.Name, Gender = s.Gender, BirthDate = s.BirthDate}).ToList(),
 					CreatedAt = item.CreatedAt,
 					Name = item.Name, 
 					Pages = item.Pages, 

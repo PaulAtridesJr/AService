@@ -1,3 +1,4 @@
+using System.Reflection.Metadata;
 using System.Security.Claims;
 using AService.Items;
 using AService.Models;
@@ -17,6 +18,8 @@ namespace AService
 				opt.UseInMemoryDatabase("ItemList"));
 			builder.Services.AddDbContext<BookStoreContext>(opt =>
 				opt.UseInMemoryDatabase("BookStore"));
+
+			builder.Services.AddScoped<BookStoreDBInitializer>();
 
 			//builder.Services.AddDistributedMemoryCache();
 
@@ -65,6 +68,7 @@ namespace AService
 
 			if (app.Environment.IsDevelopment())
 			{
+				app.UseItToSeedBookStoreDB();
 				app.UseSwagger();
 				app.UseSwaggerUI();
 			}
