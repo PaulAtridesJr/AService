@@ -1,11 +1,8 @@
-using System.Configuration;
 using System.Security.Claims;
 using AService.Items;
 using AService.Models;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
-
+using StackExchange.Redis;
 
 namespace AService
 {
@@ -20,6 +17,19 @@ namespace AService
 				opt.UseInMemoryDatabase("ItemList"));
 			builder.Services.AddDbContext<BookStoreContext>(opt =>
 				opt.UseInMemoryDatabase("BookStore"));
+
+			//builder.Services.AddDistributedMemoryCache();
+
+			var configurationOptions = new ConfigurationOptions
+			{
+				EndPoints = { "localhost:6379" },
+				Ssl = false
+			};
+			builder.Services.AddStackExchangeRedisCache(opt => 
+			{
+				opt.ConfigurationOptions = configurationOptions;
+			});
+
 			builder.Services.AddEndpointsApiExplorer();
 			builder.Services.AddSwaggerGen();
 

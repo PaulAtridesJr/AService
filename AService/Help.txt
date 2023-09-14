@@ -40,3 +40,15 @@ dotnet user-jwts print d6628859 --show-all
 
 dotnet user-jwts create --name MyTestUser --scope "myapi:secrets"
 
+
+
+
+redis
+
+docker run -d -p 6379:6379 --name local-redis -d redis
+
+with conf
+Where /myredis/conf/ is a local directory containing your redis.conf file.
+docker run -v /myredis/conf:/usr/local/etc/redis --name myredis redis redis-server /usr/local/etc/redis/redis.conf
+
+https://localhost:32768/api/bs/bookname/1

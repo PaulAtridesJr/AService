@@ -3,6 +3,7 @@ using AService.Items;
 using AService.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Options;
 
 namespace AService.Controllers
@@ -14,15 +15,18 @@ namespace AService.Controllers
 		private readonly BookStoreContext _context;
 		private readonly IOptions<ServiceOptions> _options;
 		private readonly ILogger<BookStoreController> _logger;
+		private readonly IDistributedCache _cache;
 
 		public BookStoreController(
 			BookStoreContext context,
 			IOptions<ServiceOptions> options, 
-			ILogger<BookStoreController> logger)
+			ILogger<BookStoreController> logger, 
+			IDistributedCache cache)
 		{
 			this._context = context;
 			this._options = options;
 			this._logger = logger;
+			this._cache = cache;
 		}
 
 		// GET: api/bs		
@@ -63,6 +67,53 @@ namespace AService.Controllers
 
 			return Ok(new BookDTO() { Name = item.Name, Authors = item.Authors, CreatedAt = item.CreatedAt, Pages = item.Pages });
 		}
+
+		// GET: api/bs/bookname/5
+		[HttpGet("bookname/{id}")]
+		public async Task<ActionResult<string>> GetBookName(long id) 
+		{
+			this._logger?.BeginScope("Name of book with id {ID} requested", id);
+
+			if (_context.Books == null)
+			{
+				this._logger?.LogError("Book store is undefined");
+				return NotFound();
+			}
+
+			string bookName;
+
+			var cashedValue = await this._cache.GetStringAsync(id.ToString());
+			if(cashedValue == null) 
+			{
+				var item = await _context.Books.FindAsync(id);
+
+				if (item == null)
+				{
+					this._logger?.LogWarning("Book with id {ID} was not found", id);
+					return NotFound();
+				}
+				else 
+				{
+					bookName = item.Name ?? "_unnamed_";
+					this._logger?.LogDebug("Name of book with id {ID} is '{NAME}'", id, bookName);
+					
+					var cacheOptions = new DistributedCacheEntryOptions
+					{
+						AbsoluteExpiration = DateTimeOffset.Now.AddMinutes(5.0),
+						SlidingExpiration = TimeSpan.FromSeconds(3600)
+					};
+					await this._cache.SetStringAsync(id.ToString(), bookName, cacheOptions);
+				}
+			}
+			else 
+			{
+				bookName = cashedValue;
+				this._logger?.LogDebug("Name of book with id {ID} is '{NAME}' (from cashe)", id, bookName);				
+			}
+
+			return Ok(bookName);
+		}
+
 
 		// PUT: api/bs/5
 		// To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
