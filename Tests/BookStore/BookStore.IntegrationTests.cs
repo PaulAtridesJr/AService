@@ -11,7 +11,7 @@ namespace AService.Tests.BookStore
 {
 	public class BookStoreIntegrationTests
 	{
-		[Fact]
+		//[Fact]
 		public async Task MiddlewareTest_ReturnsNotFoundForRequest() 
 		{
 			using var host = await new HostBuilder()

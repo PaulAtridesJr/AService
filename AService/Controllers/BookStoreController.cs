@@ -12,38 +12,54 @@ namespace AService.Controllers
 	public class BookStoreController : ControllerBase
 	{
 		private readonly BookStoreContext _context;
-		private readonly IOptions<ServiceOptions> options;
+		private readonly IOptions<ServiceOptions> _options;
+		private readonly ILogger<BookStoreController> _logger;
 
-		public BookStoreController(BookStoreContext context, IOptions<ServiceOptions> options)
+		public BookStoreController(
+			BookStoreContext context,
+			IOptions<ServiceOptions> options, 
+			ILogger<BookStoreController> logger)
 		{
 			this._context = context;
-			this.options = options;
+			this._options = options;
+			this._logger = logger;
 		}
 
 		// GET: api/bs		
 		[HttpGet]
 		public async Task<IEnumerable<BookDTO>> GetItems()
-		{			
-			return 
-				await _context.Books.
-					Select(s => new BookDTO() { Name = s.Name, Authors = s.Authors, CreatedAt = s.CreatedAt, Pages = s.Pages}).
-					ToListAsync();
+		{
+			this._logger?.BeginScope("All items requested");
+
+			var books = await this._context.Books.ToListAsync();
+			
+			var result = books.Select(s => new BookDTO() { Id = s.Id, Name = s.Name, Authors = s.Authors, CreatedAt = s.CreatedAt, Pages = s.Pages });
+
+			this._logger?.LogDebug("{Count} books found", result.Count());
+
+			return result;
 		}
 
 		// GET: api/bs/5
 		[HttpGet("{id}")]
 		public async Task<ActionResult<BookDTO>> GetItem(long id)
 		{
+			this._logger?.BeginScope("Book with id {ID} requested", id);
+
 			if (_context.Books == null)
 			{
+				this._logger?.LogError("Book store is undefined");
 				return NotFound();
 			}
 			var item = await _context.Books.FindAsync(id);
 
 			if (item == null)
 			{
+				this._logger?.LogWarning("Book with id {ID} was not found", id);
 				return NotFound();
 			}
+
+			this._logger?.LogDebug("Book with id {ID} was found", id);
 
 			return Ok(new BookDTO() { Name = item.Name, Authors = item.Authors, CreatedAt = item.CreatedAt, Pages = item.Pages });
 		}
@@ -53,14 +69,12 @@ namespace AService.Controllers
 		[HttpPut("{id}")]
 		public async Task<IActionResult> PutItem(long id, BookDTO item)
 		{
-			if (id != item.Id)
-			{
-				return BadRequest();
-			}
+			this._logger?.BeginScope("Book data update with id {ID} requested", id);
 
 			var book = await _context.Books.FindAsync(id);
 			if (book == null)
 			{
+				this._logger?.LogWarning("Book with id {ID} was not found", id);
 				return NotFound();
 			}
 
@@ -78,10 +92,11 @@ namespace AService.Controllers
 
 			try
 			{
-				await _context.SaveChangesAsync();
+				await _context.SaveChangesAsync();				
 			}
 			catch (DbUpdateConcurrencyException)
 			{
+				this._logger?.LogError("Failed to update book with id {ID} info", id);
 				if (!ItemExists(id))
 				{
 					return NotFound();
@@ -92,6 +107,7 @@ namespace AService.Controllers
 				}
 			}
 
+			this._logger?.LogWarning("Book with id {ID} info was updated", id);
 			return NoContent();
 		}
 
@@ -100,14 +116,18 @@ namespace AService.Controllers
 		[HttpPost]
 		public async Task<ActionResult<Item>> PostItem(BookDTO item)
 		{
+			this._logger?.BeginScope("Request to insert new book data");
+
 			if (_context.Books == null)
 			{
+				this._logger?.LogError("Book store is undefined");
 				return Problem("Entity set is null.");
 			}
 
 			var book = await _context.Books.FindAsync(item.Id);
 			if (book != null)
 			{
+				this._logger?.LogWarning("Book with id {ID} is already exists", item.Id);
 				return Problem($"Entity with id {item.Id} already exists.");
 			}
 
@@ -122,6 +142,8 @@ namespace AService.Controllers
 				});
 			await _context.SaveChangesAsync();
 
+			this._logger?.LogDebug("Book with id {ID} was added to store", item.Id);
+
 			return CreatedAtAction(nameof(GetItem), new { id = item.Id }, item);
 		}
 
@@ -129,18 +151,24 @@ namespace AService.Controllers
 		[HttpDelete("{id}")]
 		public async Task<IActionResult> DeleteItem(long id)
 		{
+			this._logger?.BeginScope("Request to remove book with id {ID} from store", id);
+
 			if (_context.Books == null)
 			{
+				this._logger?.LogError("Book store is undefined");
 				return NotFound();
 			}
 			var item = await _context.Books.FindAsync(id);
 			if (item == null)
 			{
+				this._logger?.LogWarning("Book with id {ID} was not found", id);
 				return NotFound();
 			}
 
 			_context.Books.Remove(item);
 			await _context.SaveChangesAsync();
+
+			this._logger?.LogDebug("Book with id {ID} was removed from store", id);
 
 			return NoContent();
 		}

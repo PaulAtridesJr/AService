@@ -1,8 +1,11 @@
 ﻿using System.Data.Entity.Infrastructure;
 using System.Linq.Expressions;
+using AService.Controllers;
 using AService.Items;
 using AService.Models;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using Moq;
 
@@ -50,6 +53,11 @@ namespace AService.Tests.BookStore
 		{
 			Mock<IOptions<ServiceOptions>> result = new();
 			return result.Object;
+		}
+
+		internal static ILogger<BookStoreController> GetLoggerMock()
+		{
+			return new NullLogger<BookStoreController>();
 		}
 
 		internal class TestDbAsyncQueryProvider<TEntity> : IDbAsyncQueryProvider
