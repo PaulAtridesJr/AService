@@ -52,3 +52,5 @@ Where /myredis/conf/ is a local directory containing your redis.conf file.
 docker run -v /myredis/conf:/usr/local/etc/redis --name myredis redis redis-server /usr/local/etc/redis/redis.conf
 
 https://localhost:32768/api/bs/bookname/1
+
+docker compose up -d
