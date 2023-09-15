@@ -2,7 +2,9 @@ using System.Reflection.Metadata;
 using System.Security.Claims;
 using AService.Items;
 using AService.Models;
+using Microsoft.CodeAnalysis.Elfie.Serialization;
 using Microsoft.EntityFrameworkCore;
+using Serilog;
 using StackExchange.Redis;
 
 namespace AService
@@ -21,6 +23,21 @@ namespace AService
 
 			builder.Services.AddScoped<BookStoreDBInitializer>();
 
+			builder.Host.UseSerilog((context, services, configuration) => configuration
+				.ReadFrom.Configuration(context.Configuration)
+				.ReadFrom.Services(services)
+				.Enrich.FromLogContext()
+				);
+
+			//.WriteTo.Console()
+			//	.WriteTo.File(
+			//	   "log.txt",
+			//	   rollingInterval: RollingInterval.Day,
+			//	   fileSizeLimitBytes: 10 * 1024 * 1024,
+			//	   retainedFileCountLimit: 2,
+			//	   rollOnFileSizeLimit: true,
+			//	   shared: true,
+			//	   flushToDiskInterval: TimeSpan.FromSeconds(1))
 			//builder.Services.AddDistributedMemoryCache();
 
 			var configurationOptions = new ConfigurationOptions
