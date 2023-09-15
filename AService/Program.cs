@@ -23,23 +23,10 @@ namespace AService
 
 			builder.Services.AddScoped<BookStoreDBInitializer>();
 
-			builder.Host.UseSerilog((context, services, configuration) => configuration
-				.ReadFrom.Configuration(context.Configuration)
-				.ReadFrom.Services(services)
-				.Enrich.FromLogContext()
-				);
-
-			//.WriteTo.Console()
-			//	.WriteTo.File(
-			//	   "log.txt",
-			//	   rollingInterval: RollingInterval.Day,
-			//	   fileSizeLimitBytes: 10 * 1024 * 1024,
-			//	   retainedFileCountLimit: 2,
-			//	   rollOnFileSizeLimit: true,
-			//	   shared: true,
-			//	   flushToDiskInterval: TimeSpan.FromSeconds(1))
+			// default cache
 			//builder.Services.AddDistributedMemoryCache();
 
+			// use redis (should be run in docker before start)
 			var configurationOptions = new ConfigurationOptions
 			{
 				EndPoints = { builder.Configuration["Redis:URL"] },
@@ -80,6 +67,11 @@ namespace AService
 
 			builder.Services.AddAuthorization();
 			builder.Services.AddAuthentication("Bearer").AddJwtBearer();
+
+			builder.Host.UseSerilog((context, services, configuration) => configuration
+				.ReadFrom.Configuration(context.Configuration)
+				.ReadFrom.Services(services)
+				);
 
 			var app = builder.Build();
 
