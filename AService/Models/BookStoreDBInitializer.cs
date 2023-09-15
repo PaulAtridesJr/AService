@@ -14,8 +14,6 @@
 
 			Book book1 = new() { Name = "Tom Soyer", Authors = new List<Author> { author1 }, CreatedAt = DateTime.UtcNow, Pages = 100 };
 
-			dbContext.Authors.Add(author1);
-
 			dbContext.Books.Add(book1);
 
 			dbContext.SaveChanges();

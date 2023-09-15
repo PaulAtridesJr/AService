@@ -16,7 +16,7 @@ namespace AService
 			builder.Services.AddControllers();
 			builder.Services.AddDbContext<ItemContext>(opt =>
 				opt.UseInMemoryDatabase("ItemList"));
-			builder.Services.AddDbContext<BookStoreContext>(opt =>
+			builder.Services.AddDbContextPool<BookStoreContext>(opt =>
 				opt.UseInMemoryDatabase("BookStore"));
 
 			builder.Services.AddScoped<BookStoreDBInitializer>();

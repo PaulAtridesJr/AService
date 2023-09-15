@@ -35,7 +35,7 @@ namespace AService.Controllers
 		{
 			this._logger?.BeginScope("All items requested");
 
-			var books = await this._context.Books.ToListAsync();
+			var books = await this._context.Books.Include(a => a.Authors).ToListAsync();
 			
 			var result = books.Select(s => 
 				new BookDTO() { 
