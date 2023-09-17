@@ -54,3 +54,5 @@ docker run -v /myredis/conf:/usr/local/etc/redis --name myredis redis redis-serv
 https://localhost:32768/api/bs/bookname/1
 
 docker compose up -d
+
+set "Redis":"URL": "cache:6379" when run in compose
