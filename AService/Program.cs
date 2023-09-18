@@ -1,8 +1,6 @@
-using System.Reflection.Metadata;
 using System.Security.Claims;
 using AService.Items;
 using AService.Models;
-using Microsoft.CodeAnalysis.Elfie.Serialization;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
 using StackExchange.Redis;
@@ -22,6 +20,13 @@ namespace AService
 				opt.UseInMemoryDatabase("BookStore"));
 
 			builder.Services.AddScoped<BookStoreDBInitializer>();
+
+			builder.Services.AddHttpLogging(options =>
+			{
+				options.LoggingFields = Microsoft.AspNetCore.HttpLogging.HttpLoggingFields.All;
+				//options.RequestHeaders.Add("Cache-Control");
+				//options.ResponseHeaders.Add("Server");
+			});
 
 			// default cache
 			//builder.Services.AddDistributedMemoryCache();
@@ -77,6 +82,7 @@ namespace AService
 
 			if (app.Environment.IsDevelopment())
 			{
+				app.UseHttpLogging();
 				app.UseItToSeedBookStoreDB();
 				app.UseSwagger();
 				app.UseSwaggerUI();
