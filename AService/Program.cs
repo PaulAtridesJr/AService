@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using AService.Items;
+using AService.Middleware;
 using AService.Models;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
@@ -91,6 +92,8 @@ namespace AService
 			app.UseHttpsRedirection();
 
 			app.UseAuthorization();
+
+			app.UseCustomHttpLogging();
 
 			app.MapGet("/", () => "Hello World!");
 			app.MapGet("/secret", (ClaimsPrincipal user) => $"Hello {user.Identity?.Name}. My secret")
