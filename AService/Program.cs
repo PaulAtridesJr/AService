@@ -22,12 +22,19 @@ namespace AService
 
 			builder.Services.AddScoped<BookStoreDBInitializer>();
 
-			builder.Services.AddHttpLogging(options =>
+			HttpLoggingOptions httpLoggingOptions = new();
+			builder.Configuration.GetSection(HttpLoggingOptions.ConfigurationSectionName)
+				.Bind(httpLoggingOptions);
+
+			if (httpLoggingOptions.Default)
 			{
-				options.LoggingFields = Microsoft.AspNetCore.HttpLogging.HttpLoggingFields.All;
-				//options.RequestHeaders.Add("Cache-Control");
-				//options.ResponseHeaders.Add("Server");
-			});
+				builder.Services.AddHttpLogging(options =>
+				{
+					options.LoggingFields = Microsoft.AspNetCore.HttpLogging.HttpLoggingFields.All;
+					//options.RequestHeaders.Add("Cache-Control");
+					//options.ResponseHeaders.Add("Server");
+				});
+			}
 
 			// default cache
 			//builder.Services.AddDistributedMemoryCache();
@@ -83,7 +90,10 @@ namespace AService
 
 			if (app.Environment.IsDevelopment())
 			{
-				app.UseHttpLogging();
+				if (httpLoggingOptions.Default)
+				{
+					app.UseHttpLogging();
+				}
 				app.UseItToSeedBookStoreDB();
 				app.UseSwagger();
 				app.UseSwaggerUI();
@@ -93,7 +103,10 @@ namespace AService
 
 			app.UseAuthorization();
 
-			app.UseCustomHttpLogging();
+			if (httpLoggingOptions.Custom)
+			{
+				app.UseCustomHttpLogging();
+			}
 
 			app.MapGet("/", () => "Hello World!");
 			app.MapGet("/secret", (ClaimsPrincipal user) => $"Hello {user.Identity?.Name}. My secret")
