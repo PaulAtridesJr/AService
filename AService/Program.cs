@@ -1,11 +1,11 @@
-using System.Configuration;
+using System.Reflection.Metadata;
 using System.Security.Claims;
 using AService.Items;
 using AService.Models;
+using Microsoft.CodeAnalysis.Elfie.Serialization;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
-
+using Serilog;
+using StackExchange.Redis;
 
 namespace AService
 {
@@ -18,6 +18,25 @@ namespace AService
 			builder.Services.AddControllers();
 			builder.Services.AddDbContext<ItemContext>(opt =>
 				opt.UseInMemoryDatabase("ItemList"));
+			builder.Services.AddDbContextPool<BookStoreContext>(opt =>
+				opt.UseInMemoryDatabase("BookStore"));
+
+			builder.Services.AddScoped<BookStoreDBInitializer>();
+
+			// default cache
+			//builder.Services.AddDistributedMemoryCache();
+
+			// use redis (should be run in docker before start)
+			var configurationOptions = new ConfigurationOptions
+			{
+				EndPoints = { builder.Configuration["Redis:URL"] },
+				Ssl = false
+			};
+			builder.Services.AddStackExchangeRedisCache(opt => 
+			{
+				opt.ConfigurationOptions = configurationOptions;
+			});
+
 			builder.Services.AddEndpointsApiExplorer();
 			builder.Services.AddSwaggerGen();
 
@@ -49,10 +68,16 @@ namespace AService
 			builder.Services.AddAuthorization();
 			builder.Services.AddAuthentication("Bearer").AddJwtBearer();
 
+			builder.Host.UseSerilog((context, services, configuration) => configuration
+				.ReadFrom.Configuration(context.Configuration)
+				.ReadFrom.Services(services)
+				);
+
 			var app = builder.Build();
 
 			if (app.Environment.IsDevelopment())
 			{
+				app.UseItToSeedBookStoreDB();
 				app.UseSwagger();
 				app.UseSwaggerUI();
 			}
