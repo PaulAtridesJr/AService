@@ -1,8 +1,7 @@
-using System.Reflection.Metadata;
 using System.Security.Claims;
 using AService.Items;
+using AService.Middleware;
 using AService.Models;
-using Microsoft.CodeAnalysis.Elfie.Serialization;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
 using StackExchange.Redis;
@@ -22,6 +21,20 @@ namespace AService
 				opt.UseInMemoryDatabase("BookStore"));
 
 			builder.Services.AddScoped<BookStoreDBInitializer>();
+
+			HttpLoggingOptions httpLoggingOptions = new();
+			builder.Configuration.GetSection(HttpLoggingOptions.ConfigurationSectionName)
+				.Bind(httpLoggingOptions);
+
+			if (httpLoggingOptions.Default)
+			{
+				builder.Services.AddHttpLogging(options =>
+				{
+					options.LoggingFields = Microsoft.AspNetCore.HttpLogging.HttpLoggingFields.All;
+					//options.RequestHeaders.Add("Cache-Control");
+					//options.ResponseHeaders.Add("Server");
+				});
+			}
 
 			// default cache
 			//builder.Services.AddDistributedMemoryCache();
@@ -77,6 +90,10 @@ namespace AService
 
 			if (app.Environment.IsDevelopment())
 			{
+				if (httpLoggingOptions.Default)
+				{
+					app.UseHttpLogging();
+				}
 				app.UseItToSeedBookStoreDB();
 				app.UseSwagger();
 				app.UseSwaggerUI();
@@ -85,6 +102,11 @@ namespace AService
 			app.UseHttpsRedirection();
 
 			app.UseAuthorization();
+
+			if (httpLoggingOptions.Custom)
+			{
+				app.UseCustomHttpLogging();
+			}
 
 			app.MapGet("/", () => "Hello World!");
 			app.MapGet("/secret", (ClaimsPrincipal user) => $"Hello {user.Identity?.Name}. My secret")
